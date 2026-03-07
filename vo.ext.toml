@@ -1,0 +1,3 @@
+[extension]
+name = "gix"
+path = "rust/target/{profile}/libvo_gix"

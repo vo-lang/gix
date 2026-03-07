@@ -1,0 +1,164 @@
+package gix
+
+import "encoding/json"
+
+type Repo struct {
+	ID uint32 `json:"id"`
+}
+
+type Branch struct {
+	Name   string `json:"name"`
+	IsHead bool   `json:"is_head"`
+}
+
+type StatusItem struct {
+	Path          string `json:"path"`
+	Status        string `json:"status"`
+	IndexNew      bool   `json:"index_new"`
+	IndexModified bool   `json:"index_modified"`
+	IndexDeleted  bool   `json:"index_deleted"`
+	WorktreeNew   bool   `json:"worktree_new"`
+	WorktreeMod   bool   `json:"worktree_modified"`
+	WorktreeDel   bool   `json:"worktree_deleted"`
+	Conflicted    bool   `json:"conflicted"`
+}
+
+type Commit struct {
+	ID          string `json:"id"`
+	Summary     string `json:"summary"`
+	AuthorName  string `json:"author_name"`
+	AuthorEmail string `json:"author_email"`
+	TimeUnix    int64  `json:"time_unix"`
+}
+
+type idReq struct {
+	ID uint32 `json:"id"`
+}
+
+func marshalReq(v any) string {
+	b, _ := json.Marshal(v)
+	return string(b)
+}
+
+func Open(path string) (Repo, error) {
+	req := marshalReq(struct {
+		Path string `json:"path"`
+	}{path})
+	resp, err := RawCall("open", req)
+	if err != nil {
+		return Repo{}, err
+	}
+	var out Repo
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return Repo{}, err
+	}
+	return out, nil
+}
+
+func Init(path string) (Repo, error) {
+	req := marshalReq(struct {
+		Path string `json:"path"`
+	}{path})
+	resp, err := RawCall("init", req)
+	if err != nil {
+		return Repo{}, err
+	}
+	var out Repo
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return Repo{}, err
+	}
+	return out, nil
+}
+
+func Discover(startPath string) (Repo, error) {
+	req := marshalReq(struct {
+		StartPath string `json:"start_path"`
+	}{startPath})
+	resp, err := RawCall("discover", req)
+	if err != nil {
+		return Repo{}, err
+	}
+	var out Repo
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return Repo{}, err
+	}
+	return out, nil
+}
+
+func (r Repo) Status() ([]StatusItem, error) {
+	resp, err := RawCall("status", marshalReq(idReq{r.ID}))
+	if err != nil {
+		return nil, err
+	}
+	var out struct {
+		Items []StatusItem `json:"items"`
+	}
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return nil, err
+	}
+	return out.Items, nil
+}
+
+func (r Repo) Branches() ([]Branch, error) {
+	resp, err := RawCall("branches", marshalReq(idReq{r.ID}))
+	if err != nil {
+		return nil, err
+	}
+	var out struct {
+		Branches []Branch `json:"branches"`
+	}
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return nil, err
+	}
+	return out.Branches, nil
+}
+
+func (r Repo) CurrentBranch() (string, error) {
+	resp, err := RawCall("current_branch", marshalReq(idReq{r.ID}))
+	if err != nil {
+		return "", err
+	}
+	var out struct {
+		Name string `json:"name"`
+	}
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return "", err
+	}
+	return out.Name, nil
+}
+
+func (r Repo) Head() (Commit, error) {
+	resp, err := RawCall("head", marshalReq(idReq{r.ID}))
+	if err != nil {
+		return Commit{}, err
+	}
+	var out Commit
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return Commit{}, err
+	}
+	return out, nil
+}
+
+func (r Repo) Log(max int) ([]Commit, error) {
+	resp, err := RawCall("log", marshalReq(struct {
+		ID  uint32 `json:"id"`
+		Max int    `json:"max"`
+	}{r.ID, max}))
+	if err != nil {
+		return nil, err
+	}
+	var out struct {
+		Commits []Commit `json:"commits"`
+	}
+	if err = json.Unmarshal(resp, &out); err != nil {
+		return nil, err
+	}
+	return out.Commits, nil
+}
+
+func (r Repo) Close() error {
+	_, err := RawCall("close", marshalReq(idReq{r.ID}))
+	return err
+}
+
+func RawCall(op string, input string) ([]byte, error)
