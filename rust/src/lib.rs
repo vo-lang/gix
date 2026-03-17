@@ -364,7 +364,7 @@ mod native {
 
     // ── RawCall entry point ─────────────────────────────────────────────────
 
-    #[vo_fn("github.com/vo-lang/gix", "RawCall")]
+    #[vo_fn("gix", "RawCall")]
     pub fn raw_call(call: &mut ExternCallContext) -> ExternResult {
         let op = call.arg_str(0).to_string();
         let input = call.arg_str(1).to_string();
