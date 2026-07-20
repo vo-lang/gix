@@ -5,6 +5,9 @@ edition = "2021"
 license = "MIT"
 description = "Vo wrapper for gix (pure-Rust git)"
 
+[package.metadata.vo]
+vomod = "../vo.mod"
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
