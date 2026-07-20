@@ -26,8 +26,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) }}
 
 env:
-  # Pin this to the first immutable SHA/tag after the package-protocol cutover.
-  VOLANG_REF: main
+  VOLANG_REF: ebe5e93d30156995b8fd289898edd13980787570
 
 jobs:
   validate:
